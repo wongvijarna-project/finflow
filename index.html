@@ -243,27 +243,14 @@
                         </div>
 
                         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-                            <!-- Donut Chart Visualization (SVG) -->
                             <div class="lg:col-span-5 flex flex-col items-center justify-center p-4">
-                                <div class="relative w-56 h-56 flex items-center justify-center">
-                                    <svg class="w-full h-full transform -rotate-90 drop-shadow-sm" viewBox="0 0 100 100">
-                                        <circle cx="50" cy="50" r="40" fill="transparent" stroke="#f1f5f9" stroke-width="16"></circle>
-                                        <template x-for="slice in donutSlices" :key="slice.name">
-                                            <circle cx="50" cy="50" r="40" fill="transparent" 
-                                                    :stroke="slice.color" 
-                                                    stroke-width="16" 
-                                                    :stroke-dasharray="slice.strokeDasharray" 
-                                                    :stroke-dashoffset="slice.strokeDashoffset" 
-                                                    class="transition-all duration-500">
-                                            </circle>
-                                        </template>
-                                    </svg>
-                                    <div class="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+                                <div class="relative w-56 h-56 rounded-full shadow-md flex items-center justify-center p-3 transition-all duration-500" :style="conicGradientStyle">
+                                    <div class="w-36 h-36 bg-white rounded-full flex flex-col items-center justify-center text-center shadow-inner">
                                         <span class="text-xs text-slate-400 font-medium">รายจ่ายรวม</span>
-                                        <span class="text-lg font-extrabold text-slate-900 mt-0.5" x-text="formatCurrency(monthlySummary.totalExpense)"></span>
+                                        <span class="text-base font-extrabold text-slate-900 mt-0.5" x-text="formatCurrency(monthlySummary.totalExpense)"></span>
                                     </div>
                                 </div>
-                                <div class="text-xs text-slate-400 mt-4 text-center">สัดส่วนแยกตามหมวดหมู่หลัก</div>
+                                <div class="text-xs text-slate-400 mt-4 text-center">สัดส่วนแยกตามหมวดหมู่หลักประจำเดือน</div>
                             </div>
 
                             <!-- Legend & Breakdown Details -->
@@ -847,6 +834,25 @@
                             percentage: (percent * 100).toFixed(1)
                         };
                     });
+                },
+
+                get conicGradientStyle() {
+                    const categories = this.monthlySummary.expenseByCategory;
+                    const total = this.monthlySummary.totalExpense;
+                    if (total === 0 || categories.length === 0) {
+                        return 'background: #e2e8f0;';
+                    }
+                    
+                    let currentAngle = 0;
+                    const stops = categories.map((cat, index) => {
+                        const angle = (cat.total / total) * 360;
+                        const start = currentAngle;
+                        const end = currentAngle + angle;
+                        currentAngle = end;
+                        const color = this.chartColors[index % this.chartColors.length];
+                        return `${color} ${start}deg ${end}deg`;
+                    });
+                    return `background: conic-gradient(${stops.join(', ')});`;
                 },
 
                 // Transaction Modal Handlers

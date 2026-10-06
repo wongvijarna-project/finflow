@@ -175,7 +175,8 @@
                         </div>
                     </div>
 
-                    <!-- 3-Month Summary Statistics Table (Oct 69 - Dec 69) -->
+                    <!-- ================= STREAMING_CHUNK:Rendering 4-Month Summary Table ================= -->
+                    <!-- 4-Month Summary Statistics Table (e.g., Jul - Oct 69) -->
                     <div class="bg-white rounded-2xl p-6 shadow-xs border border-slate-200">
                         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-5">
                             <div class="flex items-center gap-3">
@@ -183,22 +184,22 @@
                                     <i class="fa-solid fa-table-list"></i>
                                 </div>
                                 <div>
-                                    <h3 class="font-bold text-slate-800 text-base" x-text="'ตารางสรุปสถิติ 3 เดือน (' + formatMonthName(threeMonthMonths[0]) + ' - ' + formatMonthName(threeMonthMonths[2]) + ')'"></h3>
-                                    <p class="text-xs text-slate-400">สรุปรายรับ รายจ่าย และยอดคงเหลือสุทธิประจำเดือน</p>
+                                    <h3 class="font-bold text-slate-800 text-base" x-text="'ตารางสรุปสถิติ 4 เดือน (' + formatMonthName(fourMonthMonths[0]) + ' - ' + formatMonthName(fourMonthMonths[3]) + ')'"></h3>
+                                    <p class="text-xs text-slate-400">สรุปรายรับ รายจ่าย และยอดคงเหลือสุทธิประจำเดือน (ย้อนหลัง 4 เดือนรวมเดือนที่เลือก)</p>
                                 </div>
                             </div>
-                            <!-- Category Filter for 3-Month Table -->
+                            <!-- Category Filter for 4-Month Table -->
                             <div class="flex items-center gap-2 w-full sm:w-auto">
                                 <span class="text-xs text-slate-500 whitespace-nowrap">กรองหมวดหมู่:</span>
-                                <select x-model="threeMonthFilterCategory" class="bg-slate-50 border border-slate-200 text-slate-800 text-xs rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 w-full sm:w-auto">
+                                <select x-model="fourMonthFilterCategory" class="bg-slate-50 border border-slate-200 text-slate-800 text-xs rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 w-full sm:w-auto">
                                     <option value="all">ทุกหมวดหมู่ทั้งหมด</option>
                                     <optgroup label="หมวดรายจ่าย">
-                                        <template x-for="cat in categories.expense" :key="'3m_exp_'+cat.name">
+                                        <template x-for="cat in categories.expense" :key="'4m_exp_'+cat.name">
                                             <option :value="cat.name" x-text="cat.name"></option>
                                         </template>
                                     </optgroup>
                                     <optgroup label="หมวดรายรับ">
-                                        <template x-for="cat in categories.income" :key="'3m_inc_'+cat.name">
+                                        <template x-for="cat in categories.income" :key="'4m_inc_'+cat.name">
                                             <option :value="cat.name" x-text="cat.name"></option>
                                         </template>
                                     </optgroup>
@@ -217,7 +218,7 @@
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100 text-sm">
-                                    <template x-for="item in threeMonthTableData" :key="item.month">
+                                    <template x-for="item in fourMonthTableData" :key="item.month">
                                         <tr class="hover:bg-slate-50/80 transition">
                                             <td class="py-3.5 px-4 font-semibold text-slate-800" x-text="formatMonthName(item.month)"></td>
                                             <td class="py-3.5 px-4 text-right font-bold text-emerald-600" x-text="formatCurrency(item.income)"></td>
@@ -627,6 +628,21 @@
         };
 
         const defaultTransactions = [
+            // กรกฎาคม 2569 (Jul 2026)
+            { id: 'j1', type: 'income', amount: 48000, date: '2026-07-01', category: 'เงินเดือน', subcategory: 'เงินเดือนประจำ', paymentMethod: 'cash', billingMonth: '', description: 'เงินเดือน กรกฎาคม' },
+            { id: 'ej1', type: 'expense', amount: 12000, date: '2026-07-02', category: 'ค่าใช้จ่ายบ้าน/สาธารณูปโภค', subcategory: 'ค่าเช่า/ผ่อนบ้าน', paymentMethod: 'cash', billingMonth: '', description: 'ค่าเช่าบ้าน ก.ค.' },
+            { id: 'ej2', type: 'expense', amount: 3000, date: '2026-07-15', category: 'อาหารและเครื่องดื่ม', subcategory: 'ซูเปอร์มาร์เก็ต', paymentMethod: 'ttb', billingMonth: '2026-08', description: 'ซื้อของซูเปอร์มาร์เก็ต' },
+
+            // สิงหาคม 2569 (Aug 2026)
+            { id: 'a1', type: 'income', amount: 48000, date: '2026-08-01', category: 'เงินเดือน', subcategory: 'เงินเดือนประจำ', paymentMethod: 'cash', billingMonth: '', description: 'เงินเดือน สิงหาคม' },
+            { id: 'ea1', type: 'expense', amount: 12000, date: '2026-08-02', category: 'ค่าใช้จ่ายบ้าน/สาธารณูปโภค', subcategory: 'ค่าเช่า/ผ่อนบ้าน', paymentMethod: 'cash', billingMonth: '', description: 'ค่าเช่าบ้าน ส.ค.' },
+            { id: 'ea2', type: 'expense', amount: 2500, date: '2026-08-20', category: 'เดินทาง', subcategory: 'น้ำมัน', paymentMethod: 'krungsri', billingMonth: '2026-09', description: 'เติมน้ำมัน' },
+
+            // กันยายน 2569 (Sep 2026)
+            { id: 's1', type: 'income', amount: 48000, date: '2026-09-01', category: 'เงินเดือน', subcategory: 'เงินเดือนประจำ', paymentMethod: 'cash', billingMonth: '', description: 'เงินเดือน กันยายน' },
+            { id: 'es1', type: 'expense', amount: 12000, date: '2026-09-02', category: 'ค่าใช้จ่ายบ้าน/สาธารณูปโภค', subcategory: 'ค่าเช่า/ผ่อนบ้าน', paymentMethod: 'cash', billingMonth: '', description: 'ค่าเช่าบ้าน ก.ย.' },
+            { id: 'es2', type: 'expense', amount: 4000, date: '2026-09-15', category: 'ช้อปปิ้งและไลฟ์สไตล์', subcategory: 'เสื้อผ้า', paymentMethod: 'ttb', billingMonth: '2026-10', description: 'ซื้อเสื้อผ้า' },
+
             // ตุลาคม 2569 (Oct 2026)
             { id: '1', type: 'income', amount: 48000, date: '2026-10-01', category: 'เงินเดือน', subcategory: 'เงินเดือนประจำ', paymentMethod: 'cash', billingMonth: '', description: 'เงินเดือนประจำเดือนนี้' },
             { id: 'e11', type: 'expense', amount: 12000, date: '2026-10-02', category: 'ค่าใช้จ่ายบ้าน/สาธารณูปโภค', subcategory: 'ค่าเช่า/ผ่อนบ้าน', paymentMethod: 'cash', billingMonth: '', description: 'ค่าเช่าบ้าน ต.ค.' },
@@ -658,7 +674,7 @@
                 filterKeyword: '',
                 filterType: 'all',
                 filterPayment: 'all',
-                threeMonthFilterCategory: 'all',
+                fourMonthFilterCategory: 'all',
 
                 // Modal States
                 showTxModal: false,
@@ -732,10 +748,10 @@
                     return { ttb, krungsri, total: ttb + krungsri };
                 },
 
-                get threeMonthMonths() {
+                get fourMonthMonths() {
                     const [y, m] = this.selectedMonth.split('-').map(Number);
                     const months = [];
-                    for (let i = 3; i >= 1; i--) {
+                    for (let i = 3; i >= 0; i--) {
                         const d = new Date(y, m - 1 - i, 1);
                         const mY = d.getFullYear();
                         const mM = String(d.getMonth() + 1).padStart(2, '0');
@@ -744,13 +760,13 @@
                     return months;
                 },
 
-                get threeMonthTableData() {
-                    return this.threeMonthMonths.map(mStr => {
+                get fourMonthTableData() {
+                    return this.fourMonthMonths.map(mStr => {
                         let income = 0;
                         let expense = 0;
                         this.transactions.forEach(tx => {
                             if (tx.date && tx.date.startsWith(mStr)) {
-                                const matchCat = this.threeMonthFilterCategory === 'all' || tx.category === this.threeMonthFilterCategory;
+                                const matchCat = this.fourMonthFilterCategory === 'all' || tx.category === this.fourMonthFilterCategory;
                                 if (matchCat) {
                                     if (tx.type === 'income') income += Number(tx.amount || 0);
                                     if (tx.type === 'expense') expense += Number(tx.amount || 0);
@@ -820,31 +836,6 @@
                         netBalance: totalIncome - totalExpense,
                         expenseByCategory
                     };
-                },
-
-                get donutSlices() {
-                    const categories = this.monthlySummary.expenseByCategory;
-                    const total = this.monthlySummary.totalExpense;
-                    if (total === 0 || categories.length === 0) return [];
-                    
-                    let cumulativePercent = 0;
-                    const radius = 40;
-                    const circumference = 2 * Math.PI * radius; // ~251.327
-                    
-                    return categories.map((cat, index) => {
-                        const percent = cat.total / total;
-                        const strokeDasharray = `${percent * circumference} ${circumference}`;
-                        const strokeDashoffset = -1 * (cumulativePercent / 100) * circumference;
-                        cumulativePercent += percent * 100;
-                        
-                        return {
-                            name: cat.name,
-                            color: this.chartColors[index % this.chartColors.length],
-                            strokeDasharray,
-                            strokeDashoffset,
-                            percentage: (percent * 100).toFixed(1)
-                        };
-                    });
                 },
 
                 get conicGradientStyle() {

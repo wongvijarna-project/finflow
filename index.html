@@ -230,9 +230,9 @@
                         </div>
                     </div>
 
-                    <!-- Category Breakdown for Selected Month -->
+                    <!-- Category Breakdown for Selected Month (Donut Chart) -->
                     <div class="bg-white rounded-2xl p-6 shadow-xs border border-slate-200">
-                        <div class="flex items-center gap-3 mb-5">
+                        <div class="flex items-center gap-3 mb-6">
                             <div class="w-10 h-10 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center">
                                 <i class="fa-solid fa-chart-pie"></i>
                             </div>
@@ -242,32 +242,45 @@
                             </div>
                         </div>
 
-                        <div class="space-y-4">
-                            <template x-for="cat in monthlySummary.expenseByCategory" :key="cat.name">
-                                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-2">
-                                    <div class="flex items-center justify-between text-sm">
-                                        <span class="font-bold text-slate-800" x-text="cat.name"></span>
-                                        <div class="text-right">
-                                            <span class="font-bold text-rose-600" x-text="formatCurrency(cat.total)"></span>
-                                            <span class="text-xs text-slate-400 ml-2" x-text="'(' + cat.percentage + '%)'"></span>
-                                        </div>
-                                    </div>
-                                    <!-- Progress bar -->
-                                    <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                                        <div class="bg-rose-500 h-full rounded-full transition-all duration-500" :style="'width: ' + cat.percentage + '%'"></div>
-                                    </div>
-                                    <!-- Subcategories breakdown -->
-                                    <div class="flex flex-wrap gap-2 pt-1">
-                                        <template x-for="(subTotal, subName) in cat.subcategories" :key="subName">
-                                            <span class="bg-white border border-slate-200 text-slate-600 text-xs px-2.5 py-1 rounded-lg">
-                                                <span x-text="subName"></span>: <strong class="text-slate-800" x-text="formatCurrency(subTotal)"></strong>
-                                            </span>
-                                        </template>
+                        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+                            <!-- Donut Chart Visualization -->
+                            <div class="lg:col-span-5 flex flex-col items-center justify-center p-4">
+                                <div class="relative w-56 h-56 rounded-full shadow-inner flex items-center justify-center" :style="conicGradientStyle">
+                                    <div class="absolute w-36 h-36 bg-white rounded-full flex flex-col items-center justify-center text-center shadow-xs">
+                                        <span class="text-xs text-slate-400 font-medium">รายจ่ายรวม</span>
+                                        <span class="text-lg font-extrabold text-slate-900 mt-0.5" x-text="formatCurrency(monthlySummary.totalExpense)"></span>
                                     </div>
                                 </div>
-                            </template>
-                            <div x-show="monthlySummary.expenseByCategory.length === 0" class="text-center py-8 text-slate-400 text-sm">
-                                ไม่มีรายการค่าใช้จ่ายในเดือนนี้
+                                <div class="text-xs text-slate-400 mt-4 text-center">สัดส่วนแยกตามหมวดหมู่หลัก</div>
+                            </div>
+
+                            <!-- Legend & Breakdown Details -->
+                            <div class="lg:col-span-7 space-y-3">
+                                <template x-for="(cat, index) in monthlySummary.expenseByCategory" :key="cat.name">
+                                    <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-100 space-y-2 hover:bg-slate-100/60 transition">
+                                        <div class="flex items-center justify-between text-sm">
+                                            <div class="flex items-center gap-2.5">
+                                                <span class="w-3.5 h-3.5 rounded-full shrink-0 shadow-xs" :style="'background-color: ' + chartColors[index % chartColors.length]"></span>
+                                                <span class="font-bold text-slate-800" x-text="cat.name"></span>
+                                            </div>
+                                            <div class="text-right">
+                                                <span class="font-bold text-rose-600" x-text="formatCurrency(cat.total)"></span>
+                                                <span class="text-xs text-slate-400 ml-1.5" x-text="'(' + cat.percentage + '%)'"></span>
+                                            </div>
+                                        </div>
+                                        <!-- Subcategories breakdown -->
+                                        <div class="flex flex-wrap gap-1.5 pt-1 pl-6">
+                                            <template x-for="(subTotal, subName) in cat.subcategories" :key="subName">
+                                                <span class="bg-white border border-slate-200 text-slate-600 text-xs px-2.5 py-0.5 rounded-lg">
+                                                    <span x-text="subName"></span>: <strong class="text-slate-800" x-text="formatCurrency(subTotal)"></strong>
+                                                </span>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+                                <div x-show="monthlySummary.expenseByCategory.length === 0" class="text-center py-12 text-slate-400 text-sm bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                                    ไม่มีรายการค่าใช้จ่ายในเดือนนี้
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -637,6 +650,8 @@
                 currentTab: 'dashboard',
                 selectedMonth: '2026-10', // ตุลาคม 2569
                 
+                chartColors: ['#f43f5e', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#64748b'],
+
                 transactions: [],
                 categories: JSON.parse(JSON.stringify(defaultCategories)),
                 
@@ -795,6 +810,26 @@
                         netBalance: totalIncome - totalExpense,
                         expenseByCategory
                     };
+                },
+
+                get conicGradientStyle() {
+                    const categories = this.monthlySummary.expenseByCategory;
+                    const total = this.monthlySummary.totalExpense;
+                    if (total === 0 || categories.length === 0) return 'background: #e2e8f0;';
+                    
+                    let cumulativePercent = 0;
+                    let gradientStops = [];
+                    
+                    categories.forEach((cat, index) => {
+                        const percent = (cat.total / total) * 100;
+                        const start = cumulativePercent;
+                        const end = cumulativePercent + percent;
+                        const color = this.chartColors[index % this.chartColors.length];
+                        gradientStops.push(`${color} ${start}% ${end}%`);
+                        cumulativePercent = end;
+                    });
+                    
+                    return `background: conic-gradient(${gradientStops.join(', ')});`;
                 },
 
                 // Transaction Modal Handlers

@@ -183,7 +183,7 @@
                                     <i class="fa-solid fa-table-list"></i>
                                 </div>
                                 <div>
-                                    <h3 class="font-bold text-slate-800 text-base">ตารางสรุปสถิติ 3 เดือน (ตุลาคม 2569 - ธันวาคม 2569)</h3>
+                                    <h3 class="font-bold text-slate-800 text-base" x-text="'ตารางสรุปสถิติ 3 เดือน (' + formatMonthName(threeMonthMonths[0]) + ' - ' + formatMonthName(threeMonthMonths[2]) + ')'"></h3>
                                     <p class="text-xs text-slate-400">สรุปรายรับ รายจ่าย และยอดคงเหลือสุทธิประจำเดือน</p>
                                 </div>
                             </div>
@@ -732,9 +732,20 @@
                     return { ttb, krungsri, total: ttb + krungsri };
                 },
 
+                get threeMonthMonths() {
+                    const [y, m] = this.selectedMonth.split('-').map(Number);
+                    const months = [];
+                    for (let i = 3; i >= 1; i--) {
+                        const d = new Date(y, m - 1 - i, 1);
+                        const mY = d.getFullYear();
+                        const mM = String(d.getMonth() + 1).padStart(2, '0');
+                        months.push(`${mY}-${mM}`);
+                    }
+                    return months;
+                },
+
                 get threeMonthTableData() {
-                    const months = ['2026-10', '2026-11', '2026-12'];
-                    return months.map(mStr => {
+                    return this.threeMonthMonths.map(mStr => {
                         let income = 0;
                         let expense = 0;
                         this.transactions.forEach(tx => {

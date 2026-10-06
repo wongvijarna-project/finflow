@@ -83,7 +83,7 @@
         <main class="flex-1 overflow-y-auto pb-24 md:pb-8">
             <div class="max-w-7xl mx-auto px-4 lg:px-8 py-6 space-y-6">
 
-                <!-- ================= TAB: DASHBOARD & STATS ================= -->
+                <!-- ================= STREAMING_CHUNK:Rendering Dashboard Tab ================= -->
                 <div x-show="currentTab === 'dashboard'" x-cloak class="space-y-6">
                     
                     <!-- Month & Year Filter Bar -->
@@ -177,13 +177,32 @@
 
                     <!-- 3-Month Summary Statistics Table (Oct 69 - Dec 69) -->
                     <div class="bg-white rounded-2xl p-6 shadow-xs border border-slate-200">
-                        <div class="flex items-center gap-3 mb-5">
-                            <div class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
-                                <i class="fa-solid fa-table-list"></i>
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-5">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
+                                    <i class="fa-solid fa-table-list"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-800 text-base">ตารางสรุปสถิติ 3 เดือน (ตุลาคม 2569 - ธันวาคม 2569)</h3>
+                                    <p class="text-xs text-slate-400">สรุปรายรับ รายจ่าย และยอดคงเหลือสุทธิประจำเดือน</p>
+                                </div>
                             </div>
-                            <div>
-                                <h3 class="font-bold text-slate-800 text-base">ตารางสรุปสถิติ 3 เดือน (ตุลาคม 2569 - ธันวาคม 2569)</h3>
-                                <p class="text-xs text-slate-400">สรุปรายรับ รายจ่าย และยอดคงเหลือสุทธิประจำเดือน</p>
+                            <!-- Category Filter for 3-Month Table -->
+                            <div class="flex items-center gap-2 w-full sm:w-auto">
+                                <span class="text-xs text-slate-500 whitespace-nowrap">กรองหมวดหมู่:</span>
+                                <select x-model="threeMonthFilterCategory" class="bg-slate-50 border border-slate-200 text-slate-800 text-xs rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 w-full sm:w-auto">
+                                    <option value="all">ทุกหมวดหมู่ทั้งหมด</option>
+                                    <optgroup label="หมวดรายจ่าย">
+                                        <template x-for="cat in categories.expense" :key="'3m_exp_'+cat.name">
+                                            <option :value="cat.name" x-text="cat.name"></option>
+                                        </template>
+                                    </optgroup>
+                                    <optgroup label="หมวดรายรับ">
+                                        <template x-for="cat in categories.income" :key="'3m_inc_'+cat.name">
+                                            <option :value="cat.name" x-text="cat.name"></option>
+                                        </template>
+                                    </optgroup>
+                                </select>
                             </div>
                         </div>
 
@@ -211,7 +230,146 @@
                         </div>
                     </div>
 
-                    <!-- Detailed Breakdown Section -->
+                    <!-- Category Breakdown for Selected Month -->
+                    <div class="bg-white rounded-2xl p-6 shadow-xs border border-slate-200">
+                        <div class="flex items-center gap-3 mb-5">
+                            <div class="w-10 h-10 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center">
+                                <i class="fa-solid fa-chart-pie"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-base">สัดส่วนค่าใช้จ่ายตามหมวดหมู่ประจำเดือน</h3>
+                                <p class="text-xs text-slate-400" x-text="'เดือน ' + formatMonthName(selectedMonth)"></p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <template x-for="cat in monthlySummary.expenseByCategory" :key="cat.name">
+                                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-2">
+                                    <div class="flex items-center justify-between text-sm">
+                                        <span class="font-bold text-slate-800" x-text="cat.name"></span>
+                                        <div class="text-right">
+                                            <span class="font-bold text-rose-600" x-text="formatCurrency(cat.total)"></span>
+                                            <span class="text-xs text-slate-400 ml-2" x-text="'(' + cat.percentage + '%)'"></span>
+                                        </div>
+                                    </div>
+                                    <!-- Progress bar -->
+                                    <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                                        <div class="bg-rose-500 h-full rounded-full transition-all duration-500" :style="'width: ' + cat.percentage + '%'"></div>
+                                    </div>
+                                    <!-- Subcategories breakdown -->
+                                    <div class="flex flex-wrap gap-2 pt-1">
+                                        <template x-for="(subTotal, subName) in cat.subcategories" :key="subName">
+                                            <span class="bg-white border border-slate-200 text-slate-600 text-xs px-2.5 py-1 rounded-lg">
+                                                <span x-text="subName"></span>: <strong class="text-slate-800" x-text="formatCurrency(subTotal)"></strong>
+                                            </span>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+                            <div x-show="monthlySummary.expenseByCategory.length === 0" class="text-center py-8 text-slate-400 text-sm">
+                                ไม่มีรายการค่าใช้จ่ายในเดือนนี้
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ================= STREAMING_CHUNK:Rendering Transactions Tab ================= -->
+                <div x-show="currentTab === 'transactions'" x-cloak class="space-y-6">
+                    <!-- Filters & Search Bar -->
+                    <div class="bg-white rounded-2xl p-4 shadow-xs border border-slate-200 flex flex-col md:flex-row items-center justify-between gap-4">
+                        <div class="w-full md:w-72">
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400"><i class="fa-solid fa-search"></i></span>
+                                <input type="text" x-model="filterKeyword" placeholder="ค้นหารายการ, หมวดหมู่..." class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl pl-9 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3 w-full md:w-auto justify-end flex-wrap">
+                            <select x-model="filterType" class="bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl px-3 py-2 focus:outline-none">
+                                <option value="all">ทุกประเภท (รายรับ/รายจ่าย)</option>
+                                <option value="income">เฉพาะรายรับ</option>
+                                <option value="expense">เฉพาะรายจ่าย</option>
+                            </select>
+                            <select x-model="filterPayment" class="bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl px-3 py-2 focus:outline-none">
+                                <option value="all">ทุกช่องทางชำระ</option>
+                                <option value="cash">เงินสด</option>
+                                <option value="ttb">บัตร TTB</option>
+                                <option value="krungsri">บัตร Krungsri</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Transactions List Table -->
+                    <div class="bg-white rounded-2xl shadow-xs border border-slate-200 overflow-hidden">
+                        <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                            <h3 class="font-bold text-slate-800 text-base">รายการธุรกรรมทั้งหมด</h3>
+                            <span class="text-xs text-slate-400" x-text="'พบ ' + filteredTransactions.length + ' รายการ'"></span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                        <th class="py-3 px-4">วันที่</th>
+                                        <th class="py-3 px-4">หมวดหมู่ / รายละเอียด</th>
+                                        <th class="py-3 px-4">ช่องทาง</th>
+                                        <th class="py-3 px-4 text-right">จำนวนเงิน</th>
+                                        <th class="py-3 px-4 text-center">จัดการ</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 text-sm">
+                                    <template x-for="tx in filteredTransactions" :key="tx.id">
+                                        <tr class="hover:bg-slate-50/80 transition">
+                                            <td class="py-3.5 px-4 text-slate-600 whitespace-nowrap" x-text="formatDate(tx.date)"></td>
+                                            <td class="py-3.5 px-4">
+                                                <div class="font-bold text-slate-800" x-text="tx.category + (tx.subcategory ? ' (' + tx.subcategory + ')' : '')"></div>
+                                                <div class="text-xs text-slate-400" x-text="tx.description || 'ไม่มีรายละเอียด'"></div>
+                                            </td>
+                                            <td class="py-3.5 px-4 whitespace-nowrap">
+                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold"
+                                                      :class="{
+                                                          'bg-slate-100 text-slate-700': tx.paymentMethod === 'cash',
+                                                          'bg-blue-50 text-blue-700': tx.paymentMethod === 'ttb',
+                                                          'bg-amber-50 text-amber-700': tx.paymentMethod === 'krungsri'
+                                                      }">
+                                                    <i class="fa-solid" :class="tx.paymentMethod === 'cash' ? 'fa-money-bill' : 'fa-credit-card'"></i>
+                                                    <span x-text="tx.paymentMethod === 'cash' ? 'เงินสด' : (tx.paymentMethod === 'ttb' ? 'บัตร TTB (รอบบิล ' + formatMonthShort(tx.billingMonth) + ')' : 'บัตร Krungsri (รอบบิล ' + formatMonthShort(tx.billingMonth) + ')')"></span>
+                                                </span>
+                                            </td>
+                                            <td class="py-3.5 px-4 text-right font-bold whitespace-nowrap" :class="tx.type === 'income' ? 'text-emerald-600' : 'text-rose-600'" x-text="(tx.type === 'income' ? '+' : '-') + formatCurrency(tx.amount)"></td>
+                                            <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                                                <div class="flex items-center justify-center gap-2">
+                                                    <button @click="editTransaction(tx)" class="w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg flex items-center justify-center transition cursor-pointer" title="แก้ไข">
+                                                        <i class="fa-solid fa-pen text-xs"></i>
+                                                    </button>
+                                                    <button @click="deleteTransaction(tx.id)" class="w-8 h-8 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg flex items-center justify-center transition cursor-pointer" title="ลบ">
+                                                        <i class="fa-solid fa-trash text-xs"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                    <template x-if="filteredTransactions.length === 0">
+                                        <tr>
+                                            <td colspan="5" class="py-12 text-center text-slate-400">ไม่พบรายการธุรกรรมตามเงื่อนไขที่ค้นหา</td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ================= STREAMING_CHUNK:Rendering Categories Tab ================= -->
+                <div x-show="currentTab === 'categories'" x-cloak class="space-y-6">
+                    <div class="bg-white rounded-2xl p-6 shadow-xs border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-base">จัดการหมวดหมู่และหมวดย่อย</h3>
+                            <p class="text-xs text-slate-400">เพิ่มหรือลบหมวดหมู่รายรับและรายจ่ายได้ตามต้องการ</p>
+                        </div>
+                        <button @click="openCategoryModal()" class="bg-primary-600 hover:bg-primary-700 text-white font-medium text-sm px-4 py-2.5 rounded-xl shadow-md transition flex items-center gap-2 cursor-pointer">
+                            <i class="fa-solid fa-plus"></i> เพิ่มหมวดหมู่หลัก
+                        </button>
+                    </div>
+
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <!-- Income Categories -->
                         <div class="bg-white rounded-2xl p-6 shadow-xs border border-slate-200">
@@ -305,11 +463,7 @@
             </button>
         </nav>
 
-    </div>
-
-    <!-- Modals & Toast Root Container managed by Alpine -->
-    <div x-data="appDataModal()" x-init="initModalListeners()">
-        
+        <!-- ================= STREAMING_CHUNK:Rendering Modals and Toast ================= -->
         <!-- Transaction Modal -->
         <div x-show="showTxModal" x-cloak class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
             <div @click.outside="showTxModal = false" class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-5 border border-slate-100 max-h-[90vh] overflow-y-auto">
@@ -438,9 +592,10 @@
             <i class="fa-solid" :class="toast.icon || 'fa-circle-check text-emerald-400'"></i>
             <span x-text="toast.message"></span>
         </div>
+
     </div>
 
-    <!-- Application Script -->
+    <!-- ================= STREAMING_CHUNK:Application Logic Script ================= -->
     <script>
         const defaultCategories = {
             income: [
@@ -459,36 +614,97 @@
             ]
         };
 
+        const defaultTransactions = [
+            // ตุลาคม 2569 (Oct 2026)
+            { id: '1', type: 'income', amount: 48000, date: '2026-10-01', category: 'เงินเดือน', subcategory: 'เงินเดือนประจำ', paymentMethod: 'cash', billingMonth: '', description: 'เงินเดือนประจำเดือนนี้' },
+            { id: 'e11', type: 'expense', amount: 12000, date: '2026-10-02', category: 'ค่าใช้จ่ายบ้าน/สาธารณูปโภค', subcategory: 'ค่าเช่า/ผ่อนบ้าน', paymentMethod: 'cash', billingMonth: '', description: 'ค่าเช่าบ้าน ต.ค.' },
+            { id: '2', type: 'expense', amount: 3500, date: '2026-10-03', category: 'อาหารและเครื่องดื่ม', subcategory: 'ซูเปอร์มาร์เก็ต', paymentMethod: 'ttb', billingMonth: '2026-11', description: 'ซื้อของซูเปอร์มาร์เก็ต' },
+            { id: '3', type: 'expense', amount: 1500, date: '2026-10-05', category: 'เดินทาง', subcategory: 'น้ำมัน', paymentMethod: 'krungsri', billingMonth: '2026-11', description: 'เติมน้ำมันรถยนต์' },
+
+            // พฤศจิกายน 2569 (Nov 2026)
+            { id: 'm2', type: 'income', amount: 48000, date: '2026-11-01', category: 'เงินเดือน', subcategory: 'เงินเดือนประจำ', paymentMethod: 'cash', billingMonth: '', description: 'เงินเดือน พ.ย.' },
+            { id: 'e12', type: 'expense', amount: 12000, date: '2026-11-02', category: 'ค่าใช้จ่ายบ้าน/สาธารณูปโภค', subcategory: 'ค่าเช่า/ผ่อนบ้าน', paymentMethod: 'cash', billingMonth: '', description: 'ค่าเช่าบ้าน พ.ย.' },
+            { id: 'e13', type: 'expense', amount: 4200, date: '2026-11-10', category: 'ช้อปปิ้งและไลฟ์สไตล์', subcategory: 'เสื้อผ้า', paymentMethod: 'ttb', billingMonth: '2026-12', description: 'ซื้อเสื้อผ้าใหม่' },
+
+            // ธันวาคม 2569 (Dec 2026)
+            { id: 'm3', type: 'income', amount: 65000, date: '2026-12-01', category: 'เงินเดือน', subcategory: 'โบนัส', paymentMethod: 'cash', billingMonth: '', description: 'เงินเดือน + โบนัส ธ.ค.' },
+            { id: 'e14', type: 'expense', amount: 12000, date: '2026-12-02', category: 'ค่าใช้จ่ายบ้าน/สาธารณูปโภค', subcategory: 'ค่าเช่า/ผ่อนบ้าน', paymentMethod: 'cash', billingMonth: '', description: 'ค่าเช่าบ้าน ธ.ค.' },
+            { id: 'e15', type: 'expense', amount: 8500, date: '2026-12-20', category: 'ความบันเทิง', subcategory: 'ท่องเที่ยว', paymentMethod: 'krungsri', billingMonth: '2027-01', description: 'เที่ยวปีใหม่' }
+        ];
+
         function appData() {
             return {
                 currentTab: 'dashboard',
-                selectedMonth: '2026-10', // เริ่มต้นที่เดือน ตุลาคม 2569 (ต.ค. 69)
+                selectedMonth: '2026-10', // ตุลาคม 2569
                 
-                transactions: [
-                    // ตุลาคม 2569 (Oct 2026)
-                    { id: '1', type: 'income', amount: 48000, date: '2026-10-01', category: 'เงินเดือน', subcategory: 'เงินเดือนประจำ', paymentMethod: 'cash', billingMonth: '', description: 'เงินเดือนประจำเดือนนี้' },
-                    { id: 'e11', type: 'expense', amount: 12000, date: '2026-10-02', category: 'ค่าใช้จ่ายบ้าน/สาธารณูปโภค', subcategory: 'ค่าเช่า/ผ่อนบ้าน', paymentMethod: 'cash', billingMonth: '', description: 'ค่าเช่าบ้าน ต.ค.' },
-                    { id: '2', type: 'expense', amount: 3500, date: '2026-10-03', category: 'อาหารและเครื่องดื่ม', subcategory: 'ซูเปอร์มาร์เก็ต', paymentMethod: 'ttb', billingMonth: '2026-11', description: 'ซื้อของซูเปอร์มาร์เก็ต' },
-                    { id: '3', type: 'expense', amount: 1500, date: '2026-10-05', category: 'เดินทาง', subcategory: 'น้ำมัน', paymentMethod: 'krungsri', billingMonth: '2026-11', description: 'เติมน้ำมันรถยนต์' },
-
-                    // พฤศจิกายน 2569 (Nov 2026)
-                    { id: 'm2', type: 'income', amount: 48000, date: '2026-11-01', category: 'เงินเดือน', subcategory: 'เงินเดือนประจำ', paymentMethod: 'cash', billingMonth: '', description: 'เงินเดือน พ.ย.' },
-                    { id: 'e12', type: 'expense', amount: 12000, date: '2026-11-02', category: 'ค่าใช้จ่ายบ้าน/สาธารณูปโภค', subcategory: 'ค่าเช่า/ผ่อนบ้าน', paymentMethod: 'cash', billingMonth: '', description: 'ค่าเช่าบ้าน พ.ย.' },
-                    { id: 'e13', type: 'expense', amount: 4200, date: '2026-11-10', category: 'ช้อปปิ้งและไลฟ์สไตล์', subcategory: 'เสื้อผ้า', paymentMethod: 'ttb', billingMonth: '2026-12', description: 'ซื้อเสื้อผ้าใหม่' },
-
-                    // ธันวาคม 2569 (Dec 2026)
-                    { id: 'm3', type: 'income', amount: 65000, date: '2026-12-01', category: 'เงินเดือน', subcategory: 'โบนัส', paymentMethod: 'cash', billingMonth: '', description: 'เงินเดือน + โบนัส ธ.ค.' },
-                    { id: 'e14', type: 'expense', amount: 12000, date: '2026-12-02', category: 'ค่าใช้จ่ายบ้าน/สาธารณูปโภค', subcategory: 'ค่าเช่า/ผ่อนบ้าน', paymentMethod: 'cash', billingMonth: '', description: 'ค่าเช่าบ้าน ธ.ค.' },
-                    { id: 'e15', type: 'expense', amount: 8500, date: '2026-12-20', category: 'ความบันเทิง', subcategory: 'ท่องเที่ยว', paymentMethod: 'krungsri', billingMonth: '2027-01', description: 'เที่ยวปีใหม่' }
-                ],
+                transactions: [],
                 categories: JSON.parse(JSON.stringify(defaultCategories)),
                 
+                // Filters
                 filterKeyword: '',
                 filterType: 'all',
                 filterPayment: 'all',
+                threeMonthFilterCategory: 'all',
+
+                // Modal States
+                showTxModal: false,
+                isEditingTx: false,
+                txForm: {
+                    id: null,
+                    type: 'expense',
+                    amount: '',
+                    date: new Date().toISOString().slice(0, 10),
+                    category: '',
+                    subcategory: '',
+                    paymentMethod: 'cash',
+                    billingMonth: '2026-11',
+                    description: ''
+                },
+
+                showCatModal: false,
+                catForm: { type: 'expense', name: '' },
+
+                showSubModal: false,
+                subCategoryType: 'expense',
+                subCategoryIndex: null,
+                subForm: { name: '' },
+
+                toast: { show: false, message: '', icon: '' },
 
                 initApp() {
-<!-- ... --><ه>
+                    const savedTx = localStorage.getItem('finflow_transactions');
+                    const savedCats = localStorage.getItem('finflow_categories');
+
+                    if (savedTx) {
+                        try { this.transactions = JSON.parse(savedTx); } catch(e) { this.transactions = defaultTransactions; }
+                    } else {
+                        this.transactions = defaultTransactions;
+                    }
+
+                    if (savedCats) {
+                        try { this.categories = JSON.parse(savedCats); } catch(e) { this.categories = defaultCategories; }
+                    }
+                },
+
+                saveLocal() {
+                    localStorage.setItem('finflow_transactions', JSON.stringify(this.transactions));
+                    localStorage.setItem('finflow_categories', JSON.stringify(this.categories));
+                },
+
+                changeMonth(offset) {
+                    const [y, m] = this.selectedMonth.split('-').map(Number);
+                    const d = new Date(y, m - 1 + offset, 1);
+                    const newY = d.getFullYear();
+                    const newM = String(d.getMonth() + 1).padStart(2, '0');
+                    this.selectedMonth = `${newY}-${newM}`;
+                },
+
+                get nextMonthString() {
+                    const [y, m] = this.selectedMonth.split('-').map(Number);
+                    const d = new Date(y, m, 1); // เดือนถัดไป
+                    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                },
+
                 get nextMonthSummary() {
                     const nMonth = this.nextMonthString;
                     let ttb = 0;
@@ -509,8 +725,11 @@
                         let expense = 0;
                         this.transactions.forEach(tx => {
                             if (tx.date && tx.date.startsWith(mStr)) {
-                                if (tx.type === 'income') income += Number(tx.amount || 0);
-                                if (tx.type === 'expense') expense += Number(tx.amount || 0);
+                                const matchCat = this.threeMonthFilterCategory === 'all' || tx.category === this.threeMonthFilterCategory;
+                                if (matchCat) {
+                                    if (tx.type === 'income') income += Number(tx.amount || 0);
+                                    if (tx.type === 'expense') expense += Number(tx.amount || 0);
+                                }
                             }
                         });
                         return {
@@ -578,144 +797,35 @@
                     };
                 },
 
-                get creditCardSummary() {
-                    const ccMap = {};
-                    this.transactions.forEach(tx => {
-                        if (tx.type === 'expense' && tx.paymentMethod !== 'cash' && tx.billingMonth) {
-                            const bMonth = tx.billingMonth;
-                            if (!ccMap[bMonth]) {
-                                ccMap[bMonth] = { ttb: 0, krungsri: 0 };
-                            }
-                            if (tx.paymentMethod === 'ttb') {
-                                ccMap[bMonth].ttb += Number(tx.amount || 0);
-                            } else if (tx.paymentMethod === 'krungsri') {
-                                ccMap[bMonth].krungsri += Number(tx.amount || 0);
-                            }
-                        }
-                    });
+                // Transaction Modal Handlers
+                openTransactionModal() {
+                    this.isEditingTx = false;
+                    const defaultCat = (this.categories.expense && this.categories.expense.length > 0) 
+                        ? this.categories.expense[0] 
+                        : { name: 'อื่นๆ', subcategories: ['ทั่วไป'] };
 
-                    const sortedKeys = Object.keys(ccMap).sort((a, b) => b.localeCompare(a));
-                    const sortedObj = {};
-                    sortedKeys.forEach(k => {
-                        sortedObj[k] = ccMap[k];
-                    });
-                    return sortedObj;
+                    this.txForm = {
+                        id: null,
+                        type: 'expense',
+                        amount: '',
+                        date: new Date().toISOString().slice(0, 10),
+                        category: defaultCat.name,
+                        subcategory: defaultCat.subcategories[0] || '',
+                        paymentMethod: 'cash',
+                        billingMonth: this.selectedMonth,
+                        description: ''
+                    };
+                    this.showTxModal = true;
                 },
 
-                get expenseConicGradient() {
-                    const summary = this.monthlySummary;
-                    const total = summary.totalExpense;
-                    if (total <= 0) return '#f1f5f9 0% 100%';
-                    
-                    const colors = ['#f43f5e', '#fb923c', '#fbbf24', '#34d399', '#38bdf8', '#818cf8', '#e879f9', '#94a3b8'];
-                    let currentPercent = 0;
-                    let gradientStops = [];
-                    
-                    summary.expenseByCategory.forEach((cat, idx) => {
-                        const pct = (cat.total / total) * 100;
-                        const start = currentPercent;
-                        currentPercent += pct;
-                        const color = colors[idx % colors.length];
-                        gradientStops.push(`${color} ${start}% ${currentPercent}%`);
-                    });
-                    
-                    return `conic-gradient(${gradientStops.join(', ')})`;
-                },
-
-                formatNumber(num) {
-                    return Number(num || 0).toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-                },
-
-                formatCurrency(num) {
-                    return this.formatNumber(num) + ' ฿';
-                },
-
-                formatDate(dateStr) {
-                    if (!dateStr) return '';
-                    const [y, m, d] = dateStr.split('-');
-                    const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
-                    return `${parseInt(d)} ${months[parseInt(m) - 1]} ${parseInt(y) + 543}`;
-                },
-
-                formatMonthName(yearMonthStr) {
-                    if (!yearMonthStr) return '';
-                    const [y, m] = yearMonthStr.split('-');
-                    const months = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
-                    return `${months[parseInt(m) - 1]} ${parseInt(y) + 543}`;
-                },
-
-                formatMonthShort(yearMonthStr) {
-                    if (!yearMonthStr) return '';
-                    const [y, m] = yearMonthStr.split('-');
-                    const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
-                    return `${months[parseInt(m) - 1]} ${y.slice(2)}`;
-                }
-            };
-        }
-
-        function appDataModal() {
-            return {
-                showTxModal: false,
-                isEditingTx: false,
-                txForm: {
-                    id: null,
-                    type: 'expense',
-                    amount: '',
-                    date: new Date().toISOString().slice(0, 10),
-                    category: '',
-                    subcategory: '',
-                    paymentMethod: 'cash',
-                    billingMonth: new Date().toISOString().slice(0, 7),
-                    description: ''
-                },
-
-                showCatModal: false,
-                catForm: { type: 'expense', name: '' },
-
-                showSubModal: false,
-                subCategoryType: 'expense',
-                subCategoryIndex: null,
-                subForm: { name: '' },
-
-                toast: { show: false, message: '', icon: '' },
-
-                initModalListeners() {
-                    window.addEventListener('trigger-open-tx-modal', (e) => {
-                        const tx = e.detail;
-                        const mainApp = document.querySelector('[x-data]').__x.$data;
-                        const categories = mainApp.categories;
-
-                        if (tx) {
-                            this.isEditingTx = true;
-                            this.txForm = { ...tx };
-                        } else {
-                            this.isEditingTx = false;
-                            const defaultCat = (categories.expense && categories.expense.length > 0) 
-                                ? categories.expense[0] 
-                                : { name: 'อื่นๆ', subcategories: ['ทั่วไป'] };
-                            this.txForm = {
-                                id: null,
-                                type: 'expense',
-                                amount: '',
-                                date: new Date().toISOString().slice(0, 10),
-                                category: defaultCat.name,
-                                subcategory: defaultCat.subcategories[0] || '',
-                                paymentMethod: 'cash',
-                                billingMonth: mainApp.selectedMonth,
-                                description: ''
-                            };
-                        }
-                        this.showTxModal = true;
-                    });
-
-                    window.addEventListener('show-toast', (e) => {
-                        this.showToast(e.detail.message, e.detail.icon);
-                    });
+                editTransaction(tx) {
+                    this.isEditingTx = true;
+                    this.txForm = { ...tx };
+                    this.showTxModal = true;
                 },
 
                 get currentCategoriesList() {
-                    const mainApp = document.querySelector('[x-data]').__x.$data;
-                    return mainApp.categories[this.txForm.type] || [];
+                    return this.categories[this.txForm.type] || [];
                 },
 
                 get availableSubcategories() {
@@ -760,27 +870,34 @@
                         category: this.txForm.category,
                         subcategory: this.txForm.subcategory || '',
                         paymentMethod: this.txForm.paymentMethod,
-                        billingMonth: (this.txForm.paymentMethod !== 'cash') ? (this.txForm.billingMonth || new Date().toISOString().slice(0, 7)) : '',
+                        billingMonth: (this.txForm.paymentMethod !== 'cash') ? (this.txForm.billingMonth || this.selectedMonth) : '',
                         description: this.txForm.description || ''
                     };
 
-                    const mainApp = document.querySelector('[x-data]').__x.$data;
-
                     if (this.isEditingTx) {
-                        const idx = mainApp.transactions.findIndex(t => t.id === txData.id);
+                        const idx = this.transactions.findIndex(t => t.id === txData.id);
                         if (idx !== -1) {
-                            mainApp.transactions[idx] = txData;
+                            this.transactions[idx] = txData;
                         }
                         this.showToast("อัปเดตรายการเรียบร้อยแล้ว");
                     } else {
-                        mainApp.transactions.unshift(txData);
+                        this.transactions.unshift(txData);
                         this.showToast("บันทึกรายการเรียบร้อยแล้ว");
                     }
 
-                    mainApp.saveLocal();
+                    this.saveLocal();
                     this.showTxModal = false;
                 },
 
+                deleteTransaction(id) {
+                    if (confirm('คุณต้องการลบรายการนี้ใช่หรือไม่?')) {
+                        this.transactions = this.transactions.filter(t => t.id !== id);
+                        this.saveLocal();
+                        this.showToast("ลบรายการเรียบร้อยแล้ว");
+                    }
+                },
+
+                // Category Modal Handlers
                 openCategoryModal() {
                     this.catForm = { type: 'expense', name: '' };
                     this.showCatModal = true;
@@ -788,25 +905,25 @@
 
                 saveNewCategory() {
                     if (!this.catForm.name) return;
-                    const mainApp = document.querySelector('[x-data]').__x.$data;
-                    if (!mainApp.categories[this.catForm.type]) {
-                        mainApp.categories[this.catForm.type] = [];
+                    if (!this.categories[this.catForm.type]) {
+                        this.categories[this.catForm.type] = [];
                     }
-                    mainApp.categories[this.catForm.type].push({ name: this.catForm.name, subcategories: [] });
-                    mainApp.saveLocal();
+                    this.categories[this.catForm.type].push({ name: this.catForm.name, subcategories: [] });
+                    this.saveLocal();
                     this.showCatModal = false;
                     this.showToast("เพิ่มหมวดหมู่หลักสำเร็จ");
                 },
 
                 deleteCategory(type, index) {
-                    const mainApp = document.querySelector('[x-data]').__x.$data;
-                    if (mainApp.categories[type].length <= 1) {
+                    if (this.categories[type].length <= 1) {
                         this.showToast("ต้องมีหมวดหมู่อย่างน้อย 1 หมวด", "fa-triangle-exclamation text-rose-400");
                         return;
                     }
-                    mainApp.categories[type].splice(index, 1);
-                    mainApp.saveLocal();
-                    this.showToast("ลบหมวดหมู่เรียบร้อยแล้ว");
+                    if (confirm('ต้องการลบหมวดหมู่นี้?')) {
+                        this.categories[type].splice(index, 1);
+                        this.saveLocal();
+                        this.showToast("ลบหมวดหมู่เรียบร้อยแล้ว");
+                    }
                 },
 
                 openSubcategoryModal(type, catIndex) {
@@ -818,18 +935,46 @@
 
                 saveNewSubcategory() {
                     if (!this.subForm.name) return;
-                    const mainApp = document.querySelector('[x-data]').__x.$data;
-                    mainApp.categories[this.subCategoryType][this.subCategoryIndex].subcategories.push(this.subForm.name);
-                    mainApp.saveLocal();
+                    this.categories[this.subCategoryType][this.subCategoryIndex].subcategories.push(this.subForm.name);
+                    this.saveLocal();
                     this.showSubModal = false;
                     this.showToast("เพิ่มหมวดย่อยสำเร็จ");
                 },
 
                 deleteSubcategory(type, catIndex, subIndex) {
-                    const mainApp = document.querySelector('[x-data]').__x.$data;
-                    mainApp.categories[type][catIndex].subcategories.splice(subIndex, 1);
-                    mainApp.saveLocal();
+                    this.categories[type][catIndex].subcategories.splice(subIndex, 1);
+                    this.saveLocal();
                     this.showToast("ลบหมวดย่อยเรียบร้อยแล้ว");
+                },
+
+                // Formatting Helpers
+                formatNumber(num) {
+                    return Number(num || 0).toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+                },
+
+                formatCurrency(num) {
+                    return this.formatNumber(num) + ' ฿';
+                },
+
+                formatDate(dateStr) {
+                    if (!dateStr) return '';
+                    const [y, m, d] = dateStr.split('-');
+                    const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+                    return `${parseInt(d)} ${months[parseInt(m) - 1]} ${parseInt(y) + 543}`;
+                },
+
+                formatMonthName(yearMonthStr) {
+                    if (!yearMonthStr) return '';
+                    const [y, m] = yearMonthStr.split('-');
+                    const months = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+                    return `${months[parseInt(m) - 1]} ${parseInt(y) + 543}`;
+                },
+
+                formatMonthShort(yearMonthStr) {
+                    if (!yearMonthStr) return '';
+                    const [y, m] = yearMonthStr.split('-');
+                    const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+                    return `${months[parseInt(m) - 1]} ${y.slice(2)}`;
                 },
 
                 showToast(message, icon = 'fa-circle-check text-emerald-400') {
